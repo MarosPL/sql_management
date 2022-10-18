@@ -3,6 +3,7 @@
 # install ODBC Driver 18 for SQL Server from https://go.microsoft.com/fwlink/?linkid=2202930
 # ask for firewall rule
 
+from calendar import c
 import pandas as pd
 import pyodbc
 
@@ -16,19 +17,20 @@ def main():
     database_name = 'testDataBase'
 
     # YOUR CREDENTIALS - TO BE DONE IN TKINTER
-    user_name = ''
-    user_password = ''
+    user_name = 'MarekKwiatkowski'
+    user_password = 'Karton123'
 
     # START CONNECTION
     connection = create_server_connection(
         server_name, database_name, user_name, user_password)
-    sql_query = 'SELECT * FROM TestTable'
 
     # READ DATA USING PANDAS
+    # sql_query = 'SELECT * FROM TestTable'
     # data = execute_query_in_pandas(connection, sql_query)
     # print(data)
 
     # READ DATA USING CURSOR
+    # sql_query = 'SELECT * FROM TestTable'
     # data2 = execute_query_from_cursor(connection, sql_query)
     # print(data2)
 
@@ -39,8 +41,14 @@ def main():
     # columns = 'Name,Surname'
     # insert_data_to_table(connection, 'TestTable', columns, records)
 
-    # CREATE USER IN MASTER DATABASE
-    # connection = create_user(connection, 'USER_FROM_PYTHON', 'Karton123', 'testDataBase','hurtownia-zabawek.database.windows.net,1433', user_name, user_password)
+    # CREATE USER
+    # connection = create_user(connection, 'USER_FROM_PYTHON', 'Karton123', 'hurtownia-zabawek.database.windows.net,1433', 'testDataBase', user_name, user_password)
+
+    # GRANT USER PERMISSION
+    # grant_user_permission(connection,'USER_FROM_PYTHON')
+
+    # DROP USER
+    # connection = drop_user(connection, 'USER_FROM_PYTHON', 'hurtownia-zabawek.database.windows.net,1433', 'TestDataBase', user_name, user_password)
 
     # DELETE RECORDS FROM TABLE
     # id_records = pd.DataFrame(['4', '5', '6'], columns=['ID'])
@@ -48,8 +56,6 @@ def main():
 
     # DROP TABLE
     # drop_table(connection, 'TestTable')
-
-    #
 
     # CREATE TEST TABLE
     # create_test_table(connection)
@@ -77,55 +83,6 @@ def create_server_connection(server_name, database_name, user_name, user_passwor
         print(e)
         print('Connection unsuccessful')
     return connection
-
-
-def create_user(connection, user_name, user_password, database_name, server_name, admin_user, admin_password):
-    try:
-
-        cursor = connection.cursor()
-        dbname = cursor.execute('SELECT DB_NAME()').fetchall()
-        if 'master' in dbname:
-            sql_query = 'CREATE LOGIN ' + user_name + ' WITH PASSWORD = \'' + user_password + '\'; CREATE USER ' + \
-                user_name + ' FOR LOGIN ' + user_name + \
-                ' WITH DEFAULT_SCHEMA = dbo; '
-            cursor.execute(sql_query)
-            cursor.commit()
-            print('User: ' + user_name + ' created in master')
-            close_server_connection(connection)
-            connection = create_server_connection(
-                server_name, database_name, admin_user, admin_password)
-            cursor = connection.cursor()
-            sql_query = 'CREATE USER ' + user_name + ' FOR LOGIN ' + \
-                user_name + ' WITH DEFAULT_SCHEMA = ' + database_name + '; '
-            cursor.execute(sql_query)
-            cursor.commit()
-            print('User: ' + user_name + 'created in ' + database_name)
-        else:
-            dbnamestring = str(dbname)
-            dbname = dbnamestring[3:str.rindex(dbnamestring, '\'')]
-            close_server_connection(connection)
-            print('Closing ' + database_name + ' connection')
-            connection = create_server_connection(
-                server_name, 'master', admin_user, admin_password)
-            cursor = connection.cursor()
-            sql_query = 'CREATE LOGIN ' + user_name + ' WITH PASSWORD = \'' + user_password + '\'; CREATE USER ' + \
-                user_name + ' FOR LOGIN ' + user_name + \
-                ' WITH DEFAULT_SCHEMA = dbo; '
-            cursor.execute(sql_query)
-            cursor.commit()
-            print('User: ' + user_name + ' created in master')
-            close_server_connection(connection)
-            connection = create_server_connection(
-                server_name, database_name, admin_user, admin_password)
-            cursor = connection.cursor()
-            sql_query = 'CREATE USER ' + user_name + ' FOR LOGIN ' + \
-                user_name + ' WITH DEFAULT_SCHEMA = ' + database_name + '; '
-            cursor.execute(sql_query)
-            cursor.commit()
-            print('User: ' + user_name + 'created in ' + database_name)
-        return connection
-    except Exception as e:
-        print(e)
 
 
 def drop_table(connection, table_name):
@@ -211,9 +168,104 @@ def create_test_table(connection):
         print('Error while creating TestTable')
 
 
+def create_user(connection, user_name, user_password, server_name, database_name, admin_user, admin_password):
+    try:
+
+        cursor = connection.cursor()
+        dbname = cursor.execute('SELECT DB_NAME()').fetchall()
+        dbnamestring = str(dbname)
+        dbname = dbnamestring[3:str.rindex(dbnamestring, '\'')]
+        if dbname == 'master':
+            sql_query = 'CREATE LOGIN ' + user_name + ' WITH PASSWORD = \'' + user_password + '\'; CREATE USER ' + \
+                user_name + ' FOR LOGIN ' + user_name + \
+                ' WITH DEFAULT_SCHEMA = dbo; '
+            cursor.execute(sql_query)
+            cursor.commit()
+            print('User: ' + user_name + ' created in master')
+            close_server_connection(connection)
+            connection = create_server_connection(
+                server_name, database_name, admin_user, admin_password)
+            cursor = connection.cursor()
+            sql_query = 'CREATE USER ' + user_name + ' FOR LOGIN ' + \
+                user_name + ' WITH DEFAULT_SCHEMA = ' + database_name + '; '
+            cursor.execute(sql_query)
+            cursor.commit()
+            print('User: ' + user_name + ' created in ' + database_name)
+        else:
+            close_server_connection(connection)
+            connection = create_server_connection(
+                server_name, 'master', admin_user, admin_password)
+            cursor = connection.cursor()
+            sql_query = 'CREATE LOGIN ' + user_name + ' WITH PASSWORD = \'' + user_password + '\'; CREATE USER ' + \
+                user_name + ' FOR LOGIN ' + user_name + \
+                ' WITH DEFAULT_SCHEMA = dbo; '
+            cursor.execute(sql_query)
+            cursor.commit()
+            print('User: ' + user_name + ' created in master')
+            close_server_connection(connection)
+            connection = create_server_connection(
+                server_name, database_name, admin_user, admin_password)
+            cursor = connection.cursor()
+            sql_query = 'CREATE USER ' + user_name + ' FOR LOGIN ' + \
+                user_name + ' WITH DEFAULT_SCHEMA = ' + database_name + '; '
+            cursor.execute(sql_query)
+            cursor.commit()
+            print('User: ' + user_name + ' created in ' + database_name)
+        return connection
+    except Exception as e:
+        print(e)
+
+
+def grant_user_permission(connection, user_name):
+    try:
+        cursor = connection.cursor()
+        sql_query = 'ALTER ROLE db_datareader ADD MEMBER ' + user_name + \
+            '; ALTER ROLE db_datawriter ADD MEMBER ' + user_name + '; '
+        cursor.execute(sql_query)
+        cursor.commit()
+        print('Permission for granted for user ' + user_name)
+    except Exception as e:
+        print(e)
+        print('Error while granting permission to user ' + user_name)
+
+
+def drop_user(connection, user_name, server_name, database_name, admin_user, admin_password):
+    try:
+        cursor = connection.cursor()
+        dbname = cursor.execute('SELECT DB_NAME()').fetchall()
+        dbnamestring = str(dbname)
+        dbname = dbnamestring[3:str.rindex(dbnamestring, '\'')]
+        if dbname == 'master':
+            sql_query = 'DROP LOGIN ' + user_name + ';DROP USER ' + user_name + '; '
+            cursor.execute(sql_query)
+            cursor.commit()
+            close_server_connection(connection)
+            connection = create_server_connection(
+                server_name, database_name, admin_user, admin_password)
+            cursor = connection.cursor()
+            sql_query = 'DROP USER ' + user_name
+            cursor.execute(sql_query)
+            cursor.commit()
+        else:
+            sql_query = 'DROP USER ' + user_name
+            cursor.execute(sql_query)
+            cursor.commit()
+            close_server_connection(connection)
+            connection = create_server_connection(
+                server_name, 'master', admin_user, admin_password)
+            sql_query = 'DROP USER ' + user_name + '; DROP LOGIN ' + user_name
+            cursor.execute(sql_query)
+            cursor.commit()
+        print('User ' + user_name + ' has been successfuly deleted')
+        return connection
+    except Exception as e:
+        print(e)
+        print('Error during deleting user ' + user_name)
+
+
 def close_server_connection(connection):
     try:
-        if not connection == '':
+        if not connection == None:
             connection.close()
     except Exception as e:
         print(e)
