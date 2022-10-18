@@ -17,8 +17,8 @@ def main():
     database_name = 'testDataBase'
 
     # YOUR CREDENTIALS - TO BE DONE IN TKINTER
-    user_name = 'MarekKwiatkowski'
-    user_password = 'Karton123'
+    user_name = ''
+    user_password = ''
 
     # START CONNECTION
     connection = create_server_connection(
