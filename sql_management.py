@@ -3,9 +3,10 @@
 # install ODBC Driver 18 for SQL Server from https://go.microsoft.com/fwlink/?linkid=2202930
 # ask for firewall rule
 
-from calendar import c
 import pandas as pd
 import pyodbc
+
+# class sql_managment:
 
 
 def main():
@@ -17,8 +18,8 @@ def main():
     database_name = 'testDataBase'
 
     # YOUR CREDENTIALS - TO BE DONE IN TKINTER
-    user_name = ''
-    user_password = ''
+    user_name = 'MarekKwiatkowski'
+    user_password = 'Karton123'
 
     # START CONNECTION
     connection = create_server_connection(
@@ -78,7 +79,8 @@ def create_server_connection(server_name, database_name, user_name, user_passwor
             r'PWD=' + user_password + ';')
 
         connection = pyodbc.connect(conn_str)
-        print('Azure Sql Database ' + database_name + ' connection successful')
+        print('Azure Sql Database ' +
+              database_name + ' connection successful')
     except Exception as e:
         print(e)
         print('Connection unsuccessful')
@@ -270,5 +272,4 @@ def close_server_connection(connection):
     except Exception as e:
         print(e)
 
-
-main()
+# main()
